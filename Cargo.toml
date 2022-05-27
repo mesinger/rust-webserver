@@ -1,0 +1,9 @@
+[package]
+name = "chatty"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+
+[dependencies]
+tokio = { version = "1.16.1", features = ["macros", "time", "signal", "sync", "rt", "net", "io-util"] }
