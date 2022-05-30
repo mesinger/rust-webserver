@@ -1,14 +1,17 @@
 use crate::core::context::{ServerContext, ServerHttpRequest};
-use crate::core::middleware::Middleware;
+use crate::core::middleware::{Middleware, MiddleWareResult};
+use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct LoggingMiddleware {
 
 }
 
+#[async_trait]
 impl Middleware for LoggingMiddleware {
-  fn action(&self, context: &mut ServerContext) {
-    self.log_http(&context.request)
+  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
+    self.log_http(&context.request);
+    Ok(())
   }
 }
 

@@ -47,10 +47,19 @@ pub enum ServerHttpResponseContent {
 }
 
 impl ServerHttpResponse {
-  pub fn to_raw_http(&self) -> Vec<u8> {
-    let mut content = match &self.content {
-      ServerHttpResponseContent::Text(text) => {text.clone().into_bytes()}
-      ServerHttpResponseContent::Binary(data) => {data.to_vec()},
+  pub fn internal_error() -> Self {
+    ServerHttpResponse {
+      code: HttpCode::InternalServerError,
+      content: ServerHttpResponseContent::Empty,
+      content_length: 0,
+      content_type: "text/plain".to_string()
+    }
+  }
+
+  pub fn into_raw_http(self) -> Vec<u8> {
+    let mut content = match self.content {
+      ServerHttpResponseContent::Text(text) => {text.into_bytes()}
+      ServerHttpResponseContent::Binary(data) => {data},
       ServerHttpResponseContent::Empty => vec![]
     };
 

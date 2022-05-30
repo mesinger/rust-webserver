@@ -1,17 +1,20 @@
 use std::collections::HashMap;
 use core::str::Split;
 use crate::core::context::{ServerContext, ServerHttpRequest};
-use crate::core::middleware::Middleware;
+use crate::core::middleware::{Middleware, MiddleWareResult};
+use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct HttpParsingMiddleware {
 
 }
 
+#[async_trait]
 impl Middleware for HttpParsingMiddleware {
-  fn action(&self, context: &mut ServerContext) {
+  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
     let req = self.parse_request(&context.raw_message);
     context.request = req;
+    Ok(())
   }
 }
 
@@ -34,6 +37,7 @@ impl HttpParsingMiddleware {
 
   fn parse_first_line(&self, line: &str) -> (String, String) {
     let mut splits = line.split(' ');
+    println!("{}", line);
     let method = String::from(splits.next().unwrap());
     let path = String::from(splits.next().unwrap());
     (method, path)

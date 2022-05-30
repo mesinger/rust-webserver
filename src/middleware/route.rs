@@ -1,20 +1,23 @@
-
 use std::sync::Arc;
 use crate::core::context::ServerContext;
-use crate::core::middleware::Middleware;
+use crate::core::middleware::{Middleware, MiddleWareResult};
+use async_trait::async_trait;
+
+pub type RouteMiddlewareResult = MiddleWareResult;
 
 #[derive(Clone)]
 pub struct RouteMiddleware {
   pub(crate) path: String,
-  pub(crate) handler: Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>,
+  pub(crate) handler: Box<Arc<dyn Fn(&mut ServerContext) -> RouteMiddlewareResult + Send + Sync>>,
 }
 
+#[async_trait]
 impl Middleware for RouteMiddleware {
-  fn action(&self, context: &mut ServerContext) {
+  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
     if context.request.path != self.path {
-      return;
+      return Ok(());
     }
 
-    (self.handler)(context);
+    (self.handler)(context)
   }
 }

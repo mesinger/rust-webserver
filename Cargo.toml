@@ -6,4 +6,5 @@ edition = "2021"
 [features]
 
 [dependencies]
+async-trait = "0.1.53"
 tokio = { version = "1.16.1", features = ["macros", "time", "signal", "sync", "rt", "net", "io-util"] }

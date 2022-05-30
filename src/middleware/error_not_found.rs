@@ -1,13 +1,15 @@
 use crate::core::context::{HttpCode, ServerContext, ServerHttpResponse, ServerHttpResponseContent};
-use crate::core::middleware::Middleware;
+use crate::core::middleware::{Middleware, MiddleWareResult};
+use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct ErrorNotFoundMiddleware {
 
 }
 
+#[async_trait]
 impl Middleware for ErrorNotFoundMiddleware {
-  fn action(&self, context: &mut ServerContext) {
+  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
     match context.response {
       Some(_) => {}
       None => {
@@ -19,5 +21,6 @@ impl Middleware for ErrorNotFoundMiddleware {
         })
       }
     }
+    Ok(())
   }
 }
