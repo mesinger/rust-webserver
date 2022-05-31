@@ -1,4 +1,5 @@
 use std::fs;
+use std::sync::Arc;
 use crate::core::context::{HttpCode, ServerContext, ServerHttpResponse, ServerHttpResponseContent};
 use crate::core::middleware::{Middleware, MiddleWareResult};
 use async_trait::async_trait;
@@ -6,6 +7,7 @@ use async_trait::async_trait;
 #[derive(Clone)]
 pub struct ServeDirMiddleware {
   pub(crate) directory_path: String,
+  pub(crate) next: Option<Arc<dyn Middleware>>,
 }
 
 #[async_trait]
@@ -30,7 +32,21 @@ impl Middleware for ServeDirMiddleware {
       });
     }
 
+    self.next(context).await;
+
     Ok(())
+  }
+
+  async fn next(&self, context: &mut ServerContext) -> MiddleWareResult {
+    if let Some(ref next) = self.next {
+      return next.action(context).await;
+    }
+
+    Ok(())
+  }
+
+  fn set_next(&mut self, next: Arc<dyn Middleware>) {
+    self.next = Some(next);
   }
 }
 

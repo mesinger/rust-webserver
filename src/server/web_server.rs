@@ -3,7 +3,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{Receiver};
 use crate::core::context::{ServerContext, ServerHttpRequest, ServerHttpResponse};
-use crate::core::middleware::{MiddlewarePipeline};
+use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use crate::middleware::error_not_found::ErrorNotFoundMiddleware;
 use crate::middleware::http_parsing::HttpParsingMiddleware;
 use crate::middleware::logging::LoggingMiddleware;
@@ -87,32 +87,3 @@ impl Server {
     socket.shutdown().await.unwrap();
   }
 }
-
-impl Server {
-  pub fn use_http_parsing(&mut self) {
-    self.middleware.push(Box::new(Arc::new(HttpParsingMiddleware {})));
-  }
-
-  pub fn use_logging(&mut self) {
-    self.middleware.push(Box::new(Arc::new(LoggingMiddleware {})));
-  }
-
-  pub fn use_route(&mut self, path: &'static str, handler: impl Fn(&mut ServerContext) -> RouteMiddlewareResult + Send + Sync + 'static) {
-    self.middleware.push(Box::new(Arc::new(RouteMiddleware {
-      path: path.to_string(),
-      handler: Box::new(Arc::new(handler)),
-    })));
-  }
-
-  pub fn use_error_handling(&mut self) {
-    self.middleware.push(Box::new(Arc::new(ErrorNotFoundMiddleware {})));
-  }
-
-  pub fn use_serve_dir(&mut self, directory: &'static str) {
-    self.middleware.push(Box::new(Arc::new(ServeDirMiddleware {
-      directory_path: directory.to_string(),
-    })));
-  }
-}
-
-

@@ -16,6 +16,8 @@ async fn main() {
   app.use_serve_dir("asset");
   app.use_error_handling();
 
+  let app = app.build();
+
   let (tx_shutdown, rx_shutdown) = broadcast::channel(1);
 
   let app = tokio::spawn(async move {
