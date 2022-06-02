@@ -1,18 +1,17 @@
 use std::fs;
 use std::sync::Arc;
 use crate::core::context::{HttpCode, ServerContext, ServerHttpResponse, ServerHttpResponseContent};
-use crate::core::middleware::{Middleware, MiddleWareResult};
+use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct ServeDirMiddleware {
   pub(crate) directory_path: String,
-  pub(crate) next: Option<Arc<dyn Middleware>>,
 }
 
 #[async_trait]
 impl Middleware for ServeDirMiddleware {
-  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
+  async fn action(&self, context: &mut ServerContext, pipeline: &mut MiddlewarePipeline) {
     let mut file_path = context.request.path.as_str();
     if file_path == "/" {
       file_path = "/index.html";
@@ -32,21 +31,7 @@ impl Middleware for ServeDirMiddleware {
       });
     }
 
-    self.next(context).await;
-
-    Ok(())
-  }
-
-  async fn next(&self, context: &mut ServerContext) -> MiddleWareResult {
-    if let Some(ref next) = self.next {
-      return next.action(context).await;
-    }
-
-    Ok(())
-  }
-
-  fn set_next(&mut self, next: Arc<dyn Middleware>) {
-    self.next = Some(next);
+    pipeline.next(context).await;
   }
 }
 

@@ -1,36 +1,25 @@
 use std::collections::HashMap;
 use core::str::Split;
 use std::sync::Arc;
-use crate::core::context::{ServerContext, ServerHttpRequest};
-use crate::core::middleware::{Middleware, MiddleWareResult};
+use crate::core::context::{ServerContext, ServerHttpRequest, ServerHttpResponse};
+use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct HttpParsingMiddleware {
-  pub(crate) next: Option<Arc<dyn Middleware>>,
 }
 
 #[async_trait]
 impl Middleware for HttpParsingMiddleware {
-  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult {
+  async fn action(&self, context: &mut ServerContext, pipeline: &mut MiddlewarePipeline) {
     let req = self.parse_request(&context.raw_message);
     context.request = req;
 
-    self.next(context).await;
+    pipeline.next(context).await;
 
-    Ok(())
-  }
-
-  async fn next(&self, context: &mut ServerContext) -> MiddleWareResult {
-    if let Some(ref next) = self.next {
-      return next.action(context).await;
+    if context.response.is_none() {
+      context.response = Some(ServerHttpResponse::internal_error());
     }
-
-    Ok(())
-  }
-
-  fn set_next(&mut self, next: Arc<dyn Middleware>) {
-    self.next = Some(next);
   }
 }
 

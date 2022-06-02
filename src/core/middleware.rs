@@ -1,14 +1,22 @@
+use std::collections::VecDeque;
 use std::sync::Arc;
 use crate::core::context::ServerContext;
 use async_trait::async_trait;
 
-pub type MiddleWareResult = Result<(), ()>;
-
 #[async_trait]
 pub trait Middleware: Send + Sync {
-  async fn action(&self, context: &mut ServerContext) -> MiddleWareResult;
-  async fn next(&self, context: &mut ServerContext) -> MiddleWareResult;
-  fn set_next(&mut self, next: Arc<dyn Middleware>);
+  async fn action(&self, context: &mut ServerContext, pipeline: &mut MiddlewarePipeline);
 }
 
-pub type MiddlewarePipeline = Vec<Arc<dyn Middleware>>;
+#[derive(Clone)]
+pub struct MiddlewarePipeline {
+  pub(crate) middlewares: VecDeque<Arc<dyn Middleware>>
+}
+
+impl MiddlewarePipeline {
+  pub async fn next(&mut self, context: &mut ServerContext) {
+    if let Some(middleware) = self.middlewares.pop_front() {
+      middleware.action(context, self).await;
+    }
+  }
+}

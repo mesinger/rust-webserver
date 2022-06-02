@@ -1,86 +1,52 @@
+use std::collections::VecDeque;
 use std::sync::Arc;
 use crate::core::context::ServerContext;
-use crate::core::middleware::Middleware;
-use crate::middleware::error_not_found::ErrorNotFoundMiddleware;
+use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use crate::middleware::http_parsing::HttpParsingMiddleware;
 use crate::middleware::logging::LoggingMiddleware;
-use crate::middleware::route::{RouteMiddleware, RouteMiddlewareResult};
+use crate::middleware::route::{RouteMiddleware};
 use crate::middleware::serve_dir::ServeDirMiddleware;
 use crate::server::web_server::Server;
 
 pub struct ServerBuilder {
   pub(crate) address: String,
-  pub(crate) middleware: Vec<Box<dyn Middleware>>,
+  pub(crate) middleware: VecDeque<Arc<dyn Middleware>>,
 }
 
 impl ServerBuilder {
   pub fn build(self) -> Server {
     Server {
       address: self.address,
-      middleware: self.middleware.into_iter().map(|m| Arc::from(m)).collect()
+      middleware: MiddlewarePipeline {middlewares: self.middleware },
     }
   }
 }
 
 impl ServerBuilder {
   pub fn use_http_parsing(&mut self) {
-    let middleware = Box::new(HttpParsingMiddleware {
-      next: None,
-    });
-
-    self.connect_to_previous_middleware(middleware.clone());
-
-    self.middleware.push(middleware);
+    let middleware = Arc::new(HttpParsingMiddleware {});
+    self.middleware.push_back(middleware);
   }
 
   pub fn use_logging(&mut self) {
-    let middleware = Box::new(LoggingMiddleware {
-      next: None,
-    });
-
-    self.connect_to_previous_middleware(middleware.clone());
-
-    self.middleware.push(middleware);
+    let middleware = Arc::new(LoggingMiddleware {});
+    self.middleware.push_back(middleware);
   }
 
-  pub fn use_route(&mut self, path: &'static str, handler: impl Fn(&mut ServerContext) -> RouteMiddlewareResult + Send + Sync + 'static) {
-    let middleware = Box::new(RouteMiddleware {
+  pub fn use_route(&mut self, path: &'static str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) {
+    let middleware = Arc::new(RouteMiddleware {
       path: path.to_string(),
       handler: Box::new(Arc::new(handler)),
-      next: None
     });
 
-    self.connect_to_previous_middleware(middleware.clone());
-
-    self.middleware.push(middleware);
-  }
-
-  pub fn use_error_handling(&mut self) {
-    let middleware = Box::new(ErrorNotFoundMiddleware {
-      next: None,
-    });
-
-    self.connect_to_previous_middleware(middleware.clone());
-
-    self.middleware.push(middleware);
+    self.middleware.push_back(middleware);
   }
 
   pub fn use_serve_dir(&mut self, directory: &'static str) {
-    let middleware = Box::new(ServeDirMiddleware {
+    let middleware = Arc::new(ServeDirMiddleware {
       directory_path: directory.to_string(),
-      next: None
     });
 
-    self.connect_to_previous_middleware(middleware.clone());
-
-    self.middleware.push(middleware);
-  }
-}
-
-impl ServerBuilder {
-  fn connect_to_previous_middleware(&mut self, next: Box<dyn Middleware>) {
-    if let Some(middleware) = self.middleware.last_mut() {
-      // middleware.set_next(next);
-    }
+    self.middleware.push_back(middleware);
   }
 }
