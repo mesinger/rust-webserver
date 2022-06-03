@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
+use crate::ServerUser;
 
 pub struct ServerContext {
   pub(crate) raw_message: String,
   pub(crate) request: ServerHttpRequest,
   pub(crate) response: Option<ServerHttpResponse>,
+  pub(crate) user: ServerUser,
 }
 
 impl ServerContext {
-  pub fn set_response(&mut self, content: &'static str) {
+  pub fn set_response(&mut self, content: &str) {
     self.response = Some(ServerHttpResponse {
       code: 200,
       content_length: content.len() as i32,

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::signal;
 use async_trait::async_trait;
 use tokio::sync::{broadcast};
-use crate::core::authentication::{AuthenticationService};
+use crate::core::authentication::{AuthenticationService, ServerUser};
 use crate::middleware::authentication::basic_authentication::BasicAuthenticationMiddleware;
 
 mod server;
@@ -16,9 +16,16 @@ async fn main() {
   app.use_http_parsing();
   app.use_authentication(Arc::new(BasicAuthenticationMiddleware {
     authentication_service: Arc::new(MockedAuthenticationService {}),
-    paths: HashSet::from(["/contact.html"]),
+    paths: HashSet::from(["/contact.html", "/shibe"]),
   }));
-  app.use_route("/shibe", |ctx| ctx.set_response("you are a shibe"));
+  app.use_route("/shibe", |ctx| {
+    let name = match &ctx.user {
+      ServerUser::Anonymous => "anonymous",
+      ServerUser::Authenticated { id, .. } => id,
+    };
+    let response = format!("you are a shibe {}", name);
+    ctx.set_response(response.as_str());
+  });
   app.use_serve_dir("asset");
   app.use_logging();
 
@@ -46,9 +53,13 @@ struct MockedAuthenticationService;
 
 #[async_trait]
 impl AuthenticationService for MockedAuthenticationService {
-  async fn authenticate_user_and_password<'a>(&'a self, _user: &'a str, password: &'a str) -> Result<(), ()> {
+  async fn authenticate_user_and_password<'a>(&'a self, user: &'a str, password: &'a str) -> Result<ServerUser, ()> {
     match password {
-      "password" => Ok(()),
+      "password" => Ok(ServerUser::Authenticated {
+        id: user.to_string(),
+        email: Some(format!("{}@email.com", user)),
+        claims: HashSet::new(),
+      }),
       _ => Err(())
     }
   }

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::sync::Arc;
-use crate::core::authentication::{AuthenticationMiddleware, AuthenticationService};
+use crate::core::authentication::{AuthenticationMiddleware, AuthenticationService, ServerUser};
 use crate::core::context::{ServerContext, ServerHttpResponse};
 use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use async_trait::async_trait;
@@ -32,13 +32,14 @@ impl<T: AuthenticationService> Middleware for BasicAuthenticationMiddleware<T> {
       return;
     }
 
+    context.user = authentication_result.unwrap();
     pipeline.next(context).await;
   }
 }
 
 #[async_trait]
 impl<T: AuthenticationService> AuthenticationMiddleware for BasicAuthenticationMiddleware<T> {
-  async fn authenticate<'a>(&'a self, authentication_value: &'a str) -> Result<(), ()> {
+  async fn authenticate<'a>(&'a self, authentication_value: &'a str) -> Result<ServerUser, ()> {
     let mut splits = authentication_value.splitn(2, ' ');
     let basic: Option<&str> = splits.next();
     let sequence: Option<&str> = splits.next();

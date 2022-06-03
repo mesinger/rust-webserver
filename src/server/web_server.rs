@@ -4,9 +4,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{Receiver};
 use crate::core::context::{ServerContext, ServerHttpRequest};
 use crate::core::middleware::{MiddlewarePipeline};
-
-
-
+use crate::ServerUser;
 
 pub struct Server {
   pub(crate) address: String,
@@ -47,6 +45,7 @@ impl Server {
       raw_message: msg,
       request: ServerHttpRequest::empty(),
       response: None,
+      user: ServerUser::Anonymous,
     };
 
     p.next(&mut context).await;
