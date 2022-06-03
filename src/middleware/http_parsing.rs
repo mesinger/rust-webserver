@@ -52,7 +52,7 @@ impl HttpParsingMiddleware {
     lines.collect::<Vec<&str>>().iter()
         .map(|&s| {
           let mut split = s.splitn(2, ": ");
-          (String::from(split.next().unwrap_or("")), String::from(split.next().unwrap_or("").strip_suffix("\r").unwrap_or("")))
+          (String::from(split.next().unwrap_or("")), String::from(split.next().unwrap_or("").strip_suffix('\r').unwrap_or("")))
         })
         .collect()
   }
