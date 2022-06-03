@@ -28,6 +28,10 @@ impl ServerBuilder {
     self.middleware.push_back(middleware);
   }
 
+  pub fn use_authentication(&mut self, authentication_middleware: Arc<dyn Middleware>) {
+    self.middleware.push_back(authentication_middleware);
+  }
+
   pub fn use_logging(&mut self) {
     let middleware = Arc::new(LoggingMiddleware {});
     self.middleware.push_back(middleware);

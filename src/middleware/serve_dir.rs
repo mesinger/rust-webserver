@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 
 use crate::core::context::{ServerContext, ServerHttpResponse, ServerHttpResponseContent};
@@ -28,6 +29,7 @@ impl Middleware for ServeDirMiddleware {
         content_length: bytes.len() as i32,
         content: ServerHttpResponseContent::Binary(bytes),
         content_type: content_type.to_string(),
+        headers: HashMap::new(),
       });
     }
 

@@ -14,6 +14,7 @@ impl ServerContext {
       content_length: content.len() as i32,
       content: ServerHttpResponseContent::Text(content.to_string()),
       content_type: "text/plain".to_string(),
+      headers: HashMap::new(),
     });
   }
 }
@@ -61,6 +62,7 @@ pub struct ServerHttpResponse {
   pub(crate) content: ServerHttpResponseContent,
   pub(crate) content_length: i32,
   pub(crate) content_type: String,
+  pub(crate) headers: HashMap<String, String>,
 }
 
 pub enum ServerHttpResponseContent {
@@ -78,12 +80,13 @@ impl ServerHttpResponse {
     ServerHttpResponse::from_code(404)
   }
 
-  fn from_code(code: u16) -> Self {
+  pub fn from_code(code: u16) -> Self {
     ServerHttpResponse {
       code,
       content: ServerHttpResponseContent::Empty,
       content_length: 0,
-      content_type: "text/plain".to_string()
+      content_type: "text/plain".to_string(),
+      headers: HashMap::new(),
     }
   }
 
@@ -99,8 +102,9 @@ Server: chatty
 Content-Length: {}
 Content-Type: {}
 Connection: Closed
-
-", self.code, ServerHttpResponse::code_to_reason_phrase(self.code), self.content_length, self.content_type);
+{}
+", self.code, ServerHttpResponse::code_to_reason_phrase(self.code), self.content_length, self.content_type,
+                           self.headers.iter().map(|(name, value)| format!("{}: {}", name, value)).collect::<Vec<String>>().join("\n"));
 
     let mut data = response.into_bytes();
     data.append(&mut content);
@@ -110,6 +114,8 @@ Connection: Closed
   fn code_to_reason_phrase(code: u16) -> &'static str {
     match code {
       200 => "OK",
+      401 => "Unauthorized",
+      403 => "Forbidden",
       404 => "Not Found",
       500 => "Internal Server Error",
       _ => panic!("Invalid http code")
