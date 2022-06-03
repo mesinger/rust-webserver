@@ -1,11 +1,11 @@
-use std::sync::Arc;
+
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{Receiver};
-use crate::core::context::{ServerContext, ServerHttpRequest, ServerHttpResponse};
-use crate::core::middleware::{Middleware, MiddlewarePipeline};
-use crate::middleware::http_parsing::HttpParsingMiddleware;
-use crate::middleware::logging::LoggingMiddleware;
+use crate::core::context::{ServerContext, ServerHttpRequest};
+use crate::core::middleware::{MiddlewarePipeline};
+
+
 
 
 pub struct Server {
@@ -41,7 +41,6 @@ impl Server {
   }
 
   async fn process(mut p: MiddlewarePipeline, mut socket: TcpStream, _tx_finished: tokio::sync::mpsc::Sender<()>) {
-    println!("{}", socket.peer_addr().unwrap());
     let msg = Server::incomming_request(&mut socket).await;
 
     let mut context = ServerContext {

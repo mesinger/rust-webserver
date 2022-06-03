@@ -12,12 +12,9 @@ pub struct RouteMiddleware {
 #[async_trait]
 impl Middleware for RouteMiddleware {
   async fn action(&self, context: &mut ServerContext, pipeline: &mut MiddlewarePipeline) {
-    if context.request.path != self.path {
-      pipeline.next(context).await;
-      return;
+    if context.request.path == self.path {
+      (self.handler)(context);
     }
-
-    (self.handler)(context);
 
     pipeline.next(context).await;
   }

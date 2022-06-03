@@ -10,9 +10,9 @@ mod middleware;
 async fn main() {
   let mut app = server::app::listen("127.0.0.1:8080");
   app.use_http_parsing();
-  app.use_logging();
   app.use_route("/shibe", |ctx| ctx.set_response("you are a shibe"));
   app.use_serve_dir("asset");
+  app.use_logging();
 
   let app = app.build();
 

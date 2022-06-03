@@ -1,6 +1,6 @@
 use std::fs;
-use std::sync::Arc;
-use crate::core::context::{HttpCode, ServerContext, ServerHttpResponse, ServerHttpResponseContent};
+
+use crate::core::context::{ServerContext, ServerHttpResponse, ServerHttpResponseContent};
 use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use async_trait::async_trait;
 
@@ -24,7 +24,7 @@ impl Middleware for ServeDirMiddleware {
       let content_type = self.content_type_for_file_name(&file_path);
 
       context.response = Some(ServerHttpResponse {
-        code: HttpCode::Ok,
+        code: 200,
         content_length: bytes.len() as i32,
         content: ServerHttpResponseContent::Binary(bytes),
         content_type: content_type.to_string(),
