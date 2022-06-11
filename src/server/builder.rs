@@ -5,7 +5,7 @@ use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use crate::middleware::authentication::authorization::AuthorizationMiddleware;
 use crate::middleware::http_parsing::HttpParsingMiddleware;
 use crate::middleware::logging::LoggingMiddleware;
-use crate::middleware::route::{RouteMiddleware};
+use crate::middleware::route::{Route, RouteConfig, RouteMiddleware};
 use crate::middleware::serve_dir::ServeDirMiddleware;
 use crate::server::web_server::Server;
 
@@ -45,10 +45,11 @@ impl ServerBuilder {
     self.middleware.push_back(middleware);
   }
 
-  pub fn use_route(&mut self, path: &'static str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) {
+  pub fn use_route(&mut self, routes: Vec<(&str, &str, Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>)>) {
     let middleware = Arc::new(RouteMiddleware {
-      path: path.to_string(),
-      handler: Box::new(Arc::new(handler)),
+      routes: routes.into_iter().map(|(method, path, handler)| {
+        (RouteConfig {method: method.to_string(), route: path.to_string()}, Route { handler })
+      }).collect(),
     });
 
     self.middleware.push_back(middleware);
@@ -61,4 +62,8 @@ impl ServerBuilder {
 
     self.middleware.push_back(middleware);
   }
+}
+
+pub fn map_get(path: &str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) -> (&str, &str, Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>) {
+  ("GET", path, Box::new(Arc::new(handler)))
 }

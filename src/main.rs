@@ -4,7 +4,9 @@ use tokio::signal;
 use async_trait::async_trait;
 use tokio::sync::{broadcast};
 use crate::core::authentication::{AuthenticationService, ServerUser};
+use crate::core::context::ServerContext;
 use crate::middleware::authentication::basic_authentication::BasicAuthenticationMiddleware;
+use crate::server::builder::map_get;
 
 mod server;
 mod core;
@@ -14,22 +16,23 @@ mod middleware;
 async fn main() {
   let mut app = server::app::listen("127.0.0.1:8080");
   app.use_http_parsing();
+
   app.use_authentication(Arc::new(BasicAuthenticationMiddleware {
     authentication_service: Arc::new(MockedAuthenticationService {}),
     paths: ["/contact.html", "/shibe"].into(),
   }));
+
   app.use_authorization([
     ("/contact.html", "doge"),
   ].into());
-  app.use_route("/shibe", |ctx| {
-    let name = match &ctx.user {
-      ServerUser::Anonymous => "anonymous",
-      ServerUser::Authenticated { id, .. } => id,
-    };
-    let response = format!("you are a shibe {}", name);
-    ctx.set_response(response.as_str());
-  });
+
+  app.use_route([
+    map_get("/shibe", |ctx: &mut ServerContext| ctx.set_response("you are a shibe")),
+    map_get("/doge", |ctx: &mut ServerContext| ctx.set_response("you are a doge")),
+  ].into());
+
   app.use_serve_dir("asset");
+
   app.use_logging();
 
   let app = app.build();
