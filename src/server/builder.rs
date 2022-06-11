@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use crate::core::context::ServerContext;
 use crate::core::middleware::{Middleware, MiddlewarePipeline};
@@ -33,7 +33,7 @@ impl ServerBuilder {
     self.middleware.push_back(authentication_middleware);
   }
 
-  pub fn use_authorization(&mut self, config: Vec<(&str, &str)>) {
+  pub fn use_authorization(&mut self, config: HashMap<&str, &str>) {
     let middleware = Arc::new(AuthorizationMiddleware {
       config: config.into_iter().map(|(path, claim)| (path.to_string(), claim.to_string())).collect(),
     });

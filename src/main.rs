@@ -16,11 +16,11 @@ async fn main() {
   app.use_http_parsing();
   app.use_authentication(Arc::new(BasicAuthenticationMiddleware {
     authentication_service: Arc::new(MockedAuthenticationService {}),
-    paths: HashSet::from(["/contact.html", "/shibe"]),
+    paths: ["/contact.html", "/shibe"].into(),
   }));
-  app.use_authorization(vec![
+  app.use_authorization([
     ("/contact.html", "doge"),
-  ]);
+  ].into());
   app.use_route("/shibe", |ctx| {
     let name = match &ctx.user {
       ServerUser::Anonymous => "anonymous",
