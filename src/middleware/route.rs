@@ -34,7 +34,7 @@ pub struct RouteConfig {
 
 #[derive(Clone)]
 pub struct Route {
-  pub(crate) handler: Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>,
+  pub(crate) handler: Arc<dyn Fn(&mut ServerContext) + Send + Sync>,
 }
 
 impl Route {

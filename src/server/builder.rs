@@ -45,7 +45,7 @@ impl ServerBuilder {
     self.middleware.push_back(middleware);
   }
 
-  pub fn use_route(&mut self, routes: Vec<(&str, &str, Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>)>) {
+  pub fn use_route(&mut self, routes: Vec<(&str, &str, Arc<dyn Fn(&mut ServerContext) + Send + Sync>)>) {
     let middleware = Arc::new(RouteMiddleware {
       routes: routes.into_iter().map(|(method, path, handler)| {
         (RouteConfig {method: method.to_string(), route: path.to_string()}, Route { handler })
@@ -64,6 +64,6 @@ impl ServerBuilder {
   }
 }
 
-pub fn map_get(path: &str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) -> (&str, &str, Box<Arc<dyn Fn(&mut ServerContext) + Send + Sync>>) {
-  ("GET", path, Box::new(Arc::new(handler)))
+pub fn map_get(path: &str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) -> (&str, &str, Arc<dyn Fn(&mut ServerContext) + Send + Sync>) {
+  ("GET", path, Arc::new(handler))
 }
