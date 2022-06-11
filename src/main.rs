@@ -18,6 +18,9 @@ async fn main() {
     authentication_service: Arc::new(MockedAuthenticationService {}),
     paths: HashSet::from(["/contact.html", "/shibe"]),
   }));
+  app.use_authorization(vec![
+    ("/contact.html", "doge"),
+  ]);
   app.use_route("/shibe", |ctx| {
     let name = match &ctx.user {
       ServerUser::Anonymous => "anonymous",
@@ -58,7 +61,7 @@ impl AuthenticationService for MockedAuthenticationService {
       "password" => Ok(ServerUser::Authenticated {
         id: user.to_string(),
         email: Some(format!("{}@email.com", user)),
-        claims: HashSet::new(),
+        claims: HashSet::from(["doge".to_string()]),
       }),
       _ => Err(())
     }

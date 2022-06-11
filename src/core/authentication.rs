@@ -20,3 +20,7 @@ pub enum ServerUser {
     claims: HashSet<String>,
   }
 }
+
+impl ServerUser {
+
+}

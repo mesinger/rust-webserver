@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 use crate::core::context::ServerContext;
 use crate::core::middleware::{Middleware, MiddlewarePipeline};
+use crate::middleware::authentication::authorization::AuthorizationMiddleware;
 use crate::middleware::http_parsing::HttpParsingMiddleware;
 use crate::middleware::logging::LoggingMiddleware;
 use crate::middleware::route::{RouteMiddleware};
@@ -30,6 +31,13 @@ impl ServerBuilder {
 
   pub fn use_authentication(&mut self, authentication_middleware: Arc<dyn Middleware>) {
     self.middleware.push_back(authentication_middleware);
+  }
+
+  pub fn use_authorization(&mut self, config: Vec<(&str, &str)>) {
+    let middleware = Arc::new(AuthorizationMiddleware {
+      config: config.into_iter().map(|(path, claim)| (path.to_string(), claim.to_string())).collect(),
+    });
+    self.middleware.push_back(middleware);
   }
 
   pub fn use_logging(&mut self) {
