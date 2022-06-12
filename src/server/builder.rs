@@ -1,11 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
+use crate::AsyncHandler;
 use crate::core::context::ServerContext;
 use crate::core::middleware::{Middleware, MiddlewarePipeline};
 use crate::middleware::authentication::authorization::AuthorizationMiddleware;
 use crate::middleware::http_parsing::HttpParsingMiddleware;
 use crate::middleware::logging::LoggingMiddleware;
-use crate::middleware::route::{Route, RouteConfig, RouteMiddleware};
+use crate::middleware::route::{Route, RouteConfig, RouteHandler, RouteMiddleware};
 use crate::middleware::serve_dir::ServeDirMiddleware;
 use crate::server::web_server::Server;
 
@@ -45,7 +46,7 @@ impl ServerBuilder {
     self.middleware.push_back(middleware);
   }
 
-  pub fn use_route(&mut self, routes: Vec<(&str, &str, Arc<dyn Fn(&mut ServerContext) + Send + Sync>)>) {
+  pub fn use_route(&mut self, routes: Vec<(&str, &str, RouteHandler)>) {
     let middleware = Arc::new(RouteMiddleware {
       routes: routes.into_iter().map(|(method, path, handler)| {
         (RouteConfig {method: method.to_string(), route: path.to_string()}, Route { handler })
@@ -64,6 +65,10 @@ impl ServerBuilder {
   }
 }
 
-pub fn map_get(path: &str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) -> (&str, &str, Arc<dyn Fn(&mut ServerContext) + Send + Sync>) {
-  ("GET", path, Arc::new(handler))
+pub fn map_get(path: &str, handler: impl Fn(&mut ServerContext) + Send + Sync + 'static) -> (&str, &str, RouteHandler) {
+  ("GET", path, RouteHandler::Closure(Arc::new(handler)))
+}
+
+pub fn map_get_handler(path: &str, handler: impl AsyncHandler + 'static) -> (&str, &str, RouteHandler) {
+  ("GET", path, RouteHandler::AsyncHandler(Arc::new(handler)))
 }

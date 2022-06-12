@@ -6,7 +6,8 @@ use tokio::sync::{broadcast};
 use crate::core::authentication::{AuthenticationService, ServerUser};
 use crate::core::context::ServerContext;
 use crate::middleware::authentication::basic_authentication::BasicAuthenticationMiddleware;
-use crate::server::builder::map_get;
+use crate::middleware::route::AsyncHandler;
+use crate::server::builder::{map_get, map_get_handler};
 
 mod server;
 mod core;
@@ -28,7 +29,7 @@ async fn main() {
 
   app.use_route([
     map_get("/shibe", |ctx: &mut ServerContext| ctx.set_response("you are a shibe")),
-    map_get("/doge", |ctx: &mut ServerContext| ctx.set_response("you are a doge")),
+    map_get_handler("/doge", DogeRouteHandler {}),
   ].into());
 
   app.use_serve_dir("asset");
@@ -68,5 +69,14 @@ impl AuthenticationService for MockedAuthenticationService {
       }),
       _ => Err(())
     }
+  }
+}
+
+struct DogeRouteHandler{}
+
+#[async_trait]
+impl AsyncHandler for DogeRouteHandler {
+  async fn handle(&self, context: &mut ServerContext) {
+    context.set_response("I am the doge handler");
   }
 }

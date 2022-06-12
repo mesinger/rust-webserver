@@ -19,7 +19,7 @@ impl Middleware for RouteMiddleware {
     });
 
     if let Some(route) = route {
-      route.invoke(context);
+      route.invoke(context).await;
     }
 
     pipeline.next(context).await;
@@ -34,13 +34,31 @@ pub struct RouteConfig {
 
 #[derive(Clone)]
 pub struct Route {
-  pub(crate) handler: Arc<dyn Fn(&mut ServerContext) + Send + Sync>,
+  pub(crate) handler: RouteHandler,
 }
 
 impl Route {
-  fn invoke(&self, context: &mut ServerContext) {
-    (self.handler)(context);
+  async fn invoke(&self, context: &mut ServerContext) {
+    match &self.handler {
+      RouteHandler::Closure(closure) => {
+        (closure)(context)
+      }
+      RouteHandler::AsyncHandler(handler) => {
+        handler.handle(context).await;
+      }
+    }
   }
+}
+
+#[derive(Clone)]
+pub enum RouteHandler {
+  Closure(Arc<dyn Fn(&mut ServerContext) + Send + Sync>),
+  AsyncHandler(Arc<dyn AsyncHandler>),
+}
+
+#[async_trait]
+pub trait AsyncHandler: Send + Sync {
+  async fn handle(&self, context: &mut ServerContext);
 }
 
 impl PartialEq<Self> for RouteConfig {
