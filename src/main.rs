@@ -44,12 +44,7 @@ async fn main() {
     app.run(rx_shutdown).await;
   });
 
-  match signal::ctrl_c().await {
-    Ok(()) => {}
-    Err(err) => {
-      eprintln!("Unable to receive ctrl_c {}", err);
-    }
-  }
+  signal::ctrl_c().await.expect("Cannot receive CTRL+C");
 
   tx_shutdown.send(()).unwrap();
 
